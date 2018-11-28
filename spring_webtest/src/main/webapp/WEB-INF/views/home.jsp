@@ -10,7 +10,7 @@
     		<c:set var ="str" value="안녕하세요 ${sessionScope.id}님 "></c:set>
     	</c:when>
     	<c:otherwise>
-    		<c:set var="str" value="메인페이지입니다"></c:set>
+    		<c:set var="str" value="기본페이지입니다"></c:set>
     	</c:otherwise>
     </c:choose>
 <html>
