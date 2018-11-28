@@ -23,7 +23,7 @@ $(document).ready(function(){
 </style> 
 </head> 
 <body> 
-
+rrrrr
 	<a id="aaa" href="<%=str %>" download>download 속성 예제</a>
 
 </body> 
