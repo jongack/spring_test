@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ 
+<mapper namespace="img">
+
+	<select id="passCheck" parameterType="Map" resultType="int">
+	SELECT COUNT(no) as cnt 
+	 FROM img 
+	 WHERE no=#{no} AND passwd=#{passwd}
+	</select>
+	<delete id="delete" parameterType="int">
+	delete from img where no=#{no}
+	</delete>
+	<update id="update" parameterType="ImgDTO">
+	update img 
+	set
+	name =#{name}, 
+	title=#{title} 
+	<if test='fname != null and fname != ""'>
+	,fname = #{fname} 
+	</if>
+	
+	where no = #{no}
+	</update>
+	<update id="updateViewcnt" parameterType="int">
+	UPDATE memo
+	SET viewcnt= viewcnt+1 
+	WHERE memono=#{memono}
+	</update>
+	<select id="Imgread" parameterType="int" resultType="ImgDTO">
+	select * from ( 
+		 				select lag(no, 2) over(order by no) pre_no2, 
+		 					   lag(no, 1) over(order by no) pre_no1, 
+		 				       no, 
+		 				       lead(no, 1) over(order by no) po_no1, 
+		 				       lead(no, 2) over(order by no) po_no2, 
+		 				       lag(fname, 2) over(order by no) pre_fname2, 
+		 				       lag(fname, 1) over(order by no) pre_fname1, 
+		 				       fname, 
+		 				       lead(fname, 1) over(order by no) po_fname1, 
+		 				       lead(fname, 2) over(order by no) po_fname2 
+		 			from( 
+		 					select no, fname, name, title  
+		 					from img  
+		 					order by no desc 
+		 			) 
+		 )where no=#{no}
+	</select>
+	<select id="read" parameterType="int" resultType="ImgDTO">
+	SELECT no, name, title, fname 
+	 FROM img 
+	WHERE no = #{no}
+	</select>
+	<insert id="create" parameterType="ImgDTO">
+	insert into img(no, name, title,passwd, mdate,fname, grpno) 
+	values((select nvl(max(no),0)+1 from img), 
+	#{name},#{title},#{passwd},sysdate,#{fname},(select nvl(max(grpno),0)+1 from img))
+	</insert>
+	<select id="total" parameterType="Map" resultType="int">
+		select count(*) from img
+		<where>
+        	<if test="col=='name'">
+       		name like '%'||#{word}||'%' 
+       		</if>
+        	<if test="col=='title'">
+       		title like '%'||#{word}||'%' 
+       		</if>
+        </where>  
+	</select>
+	<select id="list" parameterType="Map" resultType="ImgDTO">
+		select no, name, title, mdate, fname,indent, r
+		from( 
+		 	select no, name, title, mdate, fname,indent, rownum r 
+		 	from( 
+		 		select no, name, title, mdate, fname,indent from img 
+		
+		 		<where>
+		        	<if test="col=='name'">
+	        		name like '%'||#{word}||'%' 
+	        		</if>
+		        	<if test="col=='title'">
+	        		title like '%'||#{word}||'%' 
+	        		</if>
+		        </where>  
+		
+		 		order by grpno desc, ansnum 
+		 		) 
+		 	<![CDATA[                                                                     
+			)where r>=#{sno} and r<=#{eno}    
+			]]>                                                 
+		                                               
+	</select>
+</mapper>

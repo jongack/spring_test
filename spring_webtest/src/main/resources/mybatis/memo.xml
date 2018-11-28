@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ 
+<mapper namespace="memo">
+
+	<update id="upAnsnum" parameterType="Map">
+	update memo
+	set ansnum=ansnum+1 
+	where grpno=#{grpno} and ansnum>#{ansnum}
+	</update>
+	<select id="checkRefnum" parameterType="int" resultType="int">
+	select count(*) from memo where refnum=#{memono}
+	</select>
+
+	<insert id="replyCreate" parameterType="MemoVO">
+	insert into memo(memono,title, content,wdate,
+	grpno,indent,ansnum,refnum) 
+	VALUES(memo_seq.nextval,#{title}, #{content},sysdate, 
+	#{grpno},#{indent}+1,#{ansnum}+1,#{memono} )
+	</insert>
+
+	<select id="replyRead" parameterType="int" resultType="MemoVO">
+	select memono,title,grpno,indent,ansnum 
+	from memo 
+	where memono=#{memono}
+	</select>
+	<delete id="delete" parameterType="int">
+	delete from memo where memono=#{memono}
+	</delete>
+	<update id="update" parameterType="MemoVO">
+	UPDATE memo
+	SET title=#{title}, content=#{content}, wdate=sysdate
+	WHERE memono=#{memono}
+	</update>
+	<update id="updateViewcnt" parameterType="int">
+	UPDATE memo
+	SET viewcnt= viewcnt+1 
+	WHERE memono=#{memono}
+	</update>
+	
+	<select id="read" parameterType="int" resultType="MemoVO">
+	SELECT title, content, to_char(wdate,'yyyy-mm-dd hh:mi:ss') wdate, viewcnt,memono 
+	FROM memo 
+	WHERE memono=#{memono}
+	</select>
+	<insert id="create" parameterType="MemoVO">
+	INSERT INTO memo(memono, title, content, wdate,grpno)
+	VALUES(memo_seq.nextval,#{title},#{content},sysdate, 
+	(select nvl(max(grpno),0)+1 from memo))
+	</insert>
+	<select id="total" parameterType="Map" resultType="int">
+		select count(*) from memo
+		<where>
+        	<if test="col=='title'">
+       		title like '%'||#{word}||'%' 
+       		</if>
+        	<if test="col=='content'">
+       		content like '%'||#{word}||'%' 
+       		</if>
+        </where>  
+	</select>
+	<select id="list" parameterType="Map" resultType="MemoVO">
+		SELECT memono, title, wdate, viewcnt                                         
+		,grpno,indent,ansnum,r                                                        
+		from(                                                                         
+			SELECT memono, title, wdate, viewcnt                                     
+			,grpno,indent,ansnum,rownum as r                                           
+			from(                                                                      
+				SELECT memono, title, to_char(wdate,'yyyy-mm-dd hh:mi:ss') wdate, viewcnt 
+				,grpno,indent,ansnum                                                 
+				FROM memo                                                    
+		        <where>
+		        	<if test="col=='title'">
+	        		title like '%'||#{word}||'%' 
+	        		</if>
+		        	<if test="col=='content'">
+	        		content like '%'||#{word}||'%' 
+	        		</if>
+		        </where>                                                       
+				                                                                          
+				ORDER BY grpno desc, ansnum                                           
+				) 
+		<![CDATA[                                                                     
+		)where r>=#{sno} and r<=#{eno}    
+		]]>                                                   
+	</select>
+</mapper>
